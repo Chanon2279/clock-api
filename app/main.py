@@ -47,8 +47,8 @@ async def predict(file: UploadFile = File(...)):
             digit_prob, hand_prob = output[0][0].item(), output[0][1].item()
 
         return {
-            "digit_score": 1 if digit_prob >= 0.4 else 0,
-            "hand_score": 1 if hand_prob >= 0.4 else 0
+            "digit_score": 1 if digit_prob >= 0.6 else 0,
+            "hand_score": 1 if hand_prob >= 0.6 else 0
         }
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
