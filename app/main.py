@@ -4,7 +4,8 @@ from PIL import Image
 import torch
 import io
 from torchvision import transforms
-from model import ClockMultiLabel
+from .model import ClockMultiLabel
+
 
 app = FastAPI()
 
