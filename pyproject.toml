@@ -1,0 +1,7 @@
+[project]
+name = "uv-fastapi-example"
+version = "0.1.0"
+description = "FastAPI project"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]","uvicorn","torch","torchvision","pillow","python-multipart"]
