@@ -5,14 +5,14 @@ from PIL import Image
 import torch
 import io
 from torchvision import transforms
-from .model import ClockMultiOutput
+from .model import ClockMultiOutput  # เปลี่ยน import
 
 app = FastAPI()
 
-# CORS
+# CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -20,12 +20,12 @@ app.add_middleware(
 # Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Load Model
+# Load model
 model = ClockMultiOutput(num_digit_classes=10, num_hand_classes=12).to(device)
 model.load_state_dict(torch.load('app/clock_model.pth', map_location=device))
 model.eval()
 
-# Transform
+# Transform (เหมือนตอนเทรน ไม่ใส่ RandomRotation)
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor()
@@ -38,8 +38,8 @@ def root():
 @app.post("/predict/")
 async def predict(
     file: UploadFile = File(...),
-    correct_digit: int = Form(...),
-    correct_hand: int = Form(...)
+    correct_digit: int = Form(...),  
+    correct_hand: int = Form(...)   
 ):
     try:
         image_bytes = await file.read()
@@ -59,6 +59,5 @@ async def predict(
             "digit_score": digit_score,
             "hand_score": hand_score
         }
-
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
