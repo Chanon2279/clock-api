@@ -16,10 +16,10 @@ class ClockMultiLabel(nn.Module):
             nn.Flatten(),
             nn.Linear(32 * 32 * 32, 128),
             nn.ReLU(),
-            nn.Linear(128, 2),
-            nn.Sigmoid()
+            nn.Dropout(0.4),  
+            nn.Linear(128, 2)  
         )
-    
+
     def forward(self, x):
         x = self.conv(x)
         x = self.fc(x)

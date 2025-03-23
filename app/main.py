@@ -5,7 +5,7 @@ from PIL import Image
 import torch
 import io
 from torchvision import transforms
-from .model import ClockMultiLabel
+from .model import ClockMultiLabel  # Import model
 
 app = FastAPI()
 
@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Device (CPU หรือ GPU)
+# Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
@@ -25,7 +25,7 @@ model = ClockMultiLabel().to(device)
 model.load_state_dict(torch.load('app/clock_model.pth', map_location=device))
 model.eval()
 
-# Transform (เหมือนตอนเทรน ไม่ใส่ RandomRotation)
+# Transform (ใช้เหมือนตอนเทรน)
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor()
@@ -38,17 +38,22 @@ def root():
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
     try:
+        # อ่านไฟล์รูป
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
         image = transform(image).unsqueeze(0).to(device).float()
 
+        # Predict
         with torch.no_grad():
             output = model(image)
-            digit_prob, hand_prob = output[0][0].item(), output[0][1].item()
+            probs = torch.sigmoid(output)[0]  # Apply Sigmoid HERE!
+            digit_prob, hand_prob = probs[0].item(), probs[1].item()
 
         return {
             "digit_score": 1 if digit_prob >= 0.5 else 0,
-            "hand_score": 1 if hand_prob >= 0.5 else 0
+            "digit_prob": round(digit_prob, 3),
+            "hand_score": 1 if hand_prob >= 0.5 else 0,
+            "hand_prob": round(hand_prob, 3)
         }
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
