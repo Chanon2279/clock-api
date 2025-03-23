@@ -1,11 +1,11 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from PIL import Image
 import torch
 import io
 from torchvision import transforms
-from .model import ClockMultiOutput  # <-- Import ใหม่
+from .model import ClockMultiOutput
 
 app = FastAPI()
 
@@ -36,7 +36,11 @@ def root():
     return {"message": "Clock API is running!"}
 
 @app.post("/predict/")
-async def predict(file: UploadFile = File(...)):
+async def predict(
+    file: UploadFile = File(...),
+    correct_digit: int = Form(...),
+    correct_hand: int = Form(...)
+):
     try:
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
@@ -47,10 +51,14 @@ async def predict(file: UploadFile = File(...)):
             digit_pred = torch.argmax(digit_out, dim=1).item()
             hand_pred = torch.argmax(hand_out, dim=1).item()
 
+        # คะแนน
+        digit_score = 1 if digit_pred == correct_digit else 0
+        hand_score = 1 if hand_pred == correct_hand else 0
+
         return {
-            "digit_label": int(digit_pred),
-            "hand_label": int(hand_pred),
-            "result": f"{digit_pred}.{hand_pred}"  # เช่น 11.10
+            "digit_score": digit_score,
+            "hand_score": hand_score
         }
+
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
