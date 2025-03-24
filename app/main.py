@@ -5,14 +5,14 @@ from PIL import Image
 import torch
 import io
 from torchvision import transforms
-from .model import ClockClassifier  # Import model
+from .model import ClockMultiLabel  # Import the correct model class
 
 app = FastAPI()
 
 # CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -21,9 +21,9 @@ app.add_middleware(
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
-model = ClockClassifier().to(device)
-model.load_state_dict(torch.load('app/clock_model_multiclass.pth', map_location=device))
-model.eval()
+model = ClockMultiLabel().to(device)  # Create an instance of ClockMultiLabel
+model.load_state_dict(torch.load('app/clock_model_multiclass.pth', map_location=device), strict=False)
+model.eval()  # Set the model to evaluation mode
 
 # Transform (ใช้เหมือนตอนเทรน)
 transform = transforms.Compose([
@@ -38,7 +38,7 @@ def root():
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
     try:
-        # อ่านไฟล์รูป
+        # Read image file
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
         image = transform(image).unsqueeze(0).to(device).float()
