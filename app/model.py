@@ -24,10 +24,10 @@ class ClockClassifier(nn.Module):
             nn.Flatten(),
             nn.Linear(64 * 16 * 16, 128),
             nn.ReLU(),
-            nn.Dropout(0.4),
-            nn.Linear(128, 4)  # 4 classes, representing the 4 categories
+            nn.Linear(128, 2),
+            nn.Sigmoid()
         )
-
+    
     def forward(self, x):
         x = self.conv(x)
         x = self.fc(x)

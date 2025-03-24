@@ -6,7 +6,7 @@ import torch
 import io
 import numpy as np
 from torchvision import transforms
-from .model import ClockClassifier  # Make sure to import the correct model
+from .model import ClockMultiLabel
 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Device (CPU or GPU)
+# Device (CPU หรือ GPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
@@ -26,7 +26,7 @@ model = ClockClassifier().to(device)
 model.load_state_dict(torch.load('app/clock_model_multiclass.pth', map_location=device))
 model.eval()
 
-# Transform (same as during training, but no RandomRotation)
+# Transform (เหมือนตอนเทรน ไม่ใส่ RandomRotation)
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor()
@@ -47,27 +47,21 @@ def root():
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
     try:
-        # Read image from the request
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
         image = transform(image).unsqueeze(0).to(device).float()
 
-        # Predict
         with torch.no_grad():
             output = model(image)
-            # Apply softmax to convert raw scores to probabilities
-            probs = torch.softmax(output, dim=1)[0].cpu().numpy()
-            pred_class = np.argmax(probs)  # Get the class with the highest probability
+            digit_prob, hand_prob = output[0][0].item(), output[0][1].item()
 
             # Map the predicted class to digit/hand score using the class map
             result = label_map[pred_class]
 
         # Return the predicted results
         return {
-            "digit_score": result["digit_score"],
-            "digit_prob": round(probs[pred_class], 3),
-            "hand_score": result["hand_score"],
-            "hand_prob": round(probs[pred_class], 3)
+            "digit_score": 1 if digit_prob >= 0.5 else 0,
+            "hand_score": 1 if hand_prob >= 0.5 else 0
         }
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
