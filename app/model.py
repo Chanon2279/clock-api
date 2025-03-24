@@ -1,8 +1,8 @@
 import torch.nn as nn
 
-class ClockMultiOutput(nn.Module):
-    def __init__(self, num_digit_classes=10, num_hand_classes=12):
-        super(ClockMultiOutput, self).__init__()
+class ClockClassifier(nn.Module):
+    def __init__(self):
+        super(ClockClassifier, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(3, 16, 3, padding=1),
             nn.BatchNorm2d(16),
@@ -23,13 +23,11 @@ class ClockMultiOutput(nn.Module):
             nn.Flatten(),
             nn.Linear(64 * 16 * 16, 128),
             nn.ReLU(),
+            nn.Dropout(0.4),
+            nn.Linear(128, 4)  # 4 classes
         )
-        self.digit_out = nn.Linear(128, num_digit_classes)
-        self.hand_out = nn.Linear(128, num_hand_classes)
 
     def forward(self, x):
         x = self.conv(x)
         x = self.fc(x)
-        digit = self.digit_out(x)
-        hand = self.hand_out(x)
-        return digit, hand
+        return x

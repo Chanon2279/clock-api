@@ -4,48 +4,34 @@ from fastapi.responses import JSONResponse
 from PIL import Image
 import torch
 import io
-import numpy as np
 from torchvision import transforms
-<<<<<<< HEAD
-from .model import ClockClassifier  # Make sure this is the correct model import
-=======
-from .model import ClockMultiOutput  # เปลี่ยน import
->>>>>>> parent of 855b569 (fix model)
+from model import ClockClassifier  # Import from your model.py
 
 app = FastAPI()
 
 # CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-<<<<<<< HEAD
-# Device (CPU or GPU)
+# Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
 model = ClockClassifier().to(device)
 model.load_state_dict(torch.load('app/clock_model_multiclass.pth', map_location=device))
-=======
-# Device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Load model
-model = ClockMultiOutput(num_digit_classes=10, num_hand_classes=12).to(device)
-model.load_state_dict(torch.load('app/clock_model.pth', map_location=device))
->>>>>>> parent of 855b569 (fix model)
 model.eval()
 
-# Transform (like during training, no RandomRotation)
+# Transform (no augmentation for inference)
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor()
 ])
 
-# Class mapping for the new model output
+# Class mapping for multi-class output
 label_map = {
     0: {"digit_score": 1, "hand_score": 1},
     1: {"digit_score": 1, "hand_score": 0},
@@ -60,46 +46,34 @@ def root():
 @app.post("/predict/")
 async def predict(
     file: UploadFile = File(...),
-    correct_digit: int = Form(...),  
-    correct_hand: int = Form(...)   
+    correct_digit: int = Form(...),  # Expected digit (0 or 1)
+    correct_hand: int = Form(...)    # Expected hand (0 or 1)
 ):
     try:
-        # Read image file and transform
+        # Read and preprocess image
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
         image = transform(image).unsqueeze(0).to(device).float()
 
-        # Make prediction with model
+        # Prediction
         with torch.no_grad():
-<<<<<<< HEAD
-            output = model(image)  # Model output is a tensor of shape [1, 2]
-=======
-            digit_out, hand_out = model(image)
-            digit_pred = torch.argmax(digit_out, dim=1).item()
-            hand_pred = torch.argmax(hand_out, dim=1).item()
-
-        # คะแนน
-        digit_score = 1 if digit_pred == correct_digit else 0
-        hand_score = 1 if hand_pred == correct_hand else 0
->>>>>>> parent of 855b569 (fix model)
-
-            # Extract the predicted class by getting the index of max value
+            output = model(image)
             pred_class = torch.argmax(output, dim=1).item()
 
-            # Map the predicted class to digit/hand score using the class map
-            result = label_map.get(pred_class, {"digit_score": 0, "hand_score": 0})
+        # Get scores from prediction
+        predicted = label_map[pred_class]
+        digit_score = predicted["digit_score"]
+        hand_score = predicted["hand_score"]
 
-        # Return the predicted results
+        # Compare with provided correct values
+        digit_match = 1 if digit_score == correct_digit else 0
+        hand_match = 1 if hand_score == correct_hand else 0
+
         return {
-<<<<<<< HEAD
-            "digit_score": result["digit_score"],
-            "hand_score": result["hand_score"]
-=======
-            "digit_score": digit_score,
-            "hand_score": hand_score
->>>>>>> parent of 855b569 (fix model)
+            "digit_score": digit_match,
+            "hand_score": hand_match,
+            "predicted_digit": digit_score,
+            "predicted_hand": hand_score
         }
-
     except Exception as e:
-        # Return detailed error message
         return JSONResponse(status_code=400, content={"error": str(e)})
