@@ -6,7 +6,7 @@ import torch
 import io
 import numpy as np
 from torchvision import transforms
-from .model import ClockMultiLabel
+from .model import ClockClassifier  # Make sure this is the correct model import
 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Device (CPU หรือ GPU)
+# Device (CPU or GPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
@@ -26,7 +26,7 @@ model = ClockClassifier().to(device)
 model.load_state_dict(torch.load('app/clock_model_multiclass.pth', map_location=device))
 model.eval()
 
-# Transform (เหมือนตอนเทรน ไม่ใส่ RandomRotation)
+# Transform (like during training, no RandomRotation)
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor()
@@ -52,17 +52,16 @@ async def predict(file: UploadFile = File(...)):
         image = transform(image).unsqueeze(0).to(device).float()
 
         with torch.no_grad():
-            output = model(image)
-            digit_prob, hand_prob = output[0][0].item(), output[0][1].item()
+            output = model(image)  # Get the output tensor
+            pred_class = torch.argmax(output, dim=1).item()  # Get the predicted class index
 
             # Map the predicted class to digit/hand score using the class map
             result = label_map[pred_class]
 
         # Return the predicted results
         return {
-            "digit_score": 1 if digit_prob >= 0.5 else 0,
-            "hand_score": 1 if hand_prob >= 0.5 else 0
+            "digit_score": result["digit_score"],
+            "hand_score": result["hand_score"]
         }
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
-
