@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from PIL import Image
 import torch
 import io
+import numpy as np  # เพิ่มการ import numpy
 from torchvision import transforms
 from .model import ClockClassifier  # Updated import
 
@@ -55,7 +56,7 @@ async def predict(file: UploadFile = File(...)):
         with torch.no_grad():
             output = model(image)
             probs = torch.softmax(output, dim=1)[0].cpu().numpy()
-            pred_class = int(np.argmax(probs))
+            pred_class = int(np.argmax(probs))  # ใช้ np.argmax() ได้แล้ว
 
         result = label_map[pred_class]
 
