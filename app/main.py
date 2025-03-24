@@ -5,7 +5,7 @@ from PIL import Image
 import torch
 import io
 from torchvision import transforms
-from model import ClockClassifier  # Import from your model.py
+from model import ClockClassifier  # Assumes model.py is in the same directory
 
 app = FastAPI()
 
@@ -22,7 +22,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
 model = ClockClassifier().to(device)
-model.load_state_dict(torch.load('app/clock_model_multiclass.pth', map_location=device))
+model.load_state_dict(torch.load('clock_model_multiclass.pth', map_location=device))
 model.eval()
 
 # Transform (no augmentation for inference)
