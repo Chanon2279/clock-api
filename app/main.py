@@ -47,21 +47,27 @@ def root():
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
     try:
+        # Read image file and transform
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
         image = transform(image).unsqueeze(0).to(device).float()
 
+        # Make prediction with model
         with torch.no_grad():
-            output = model(image)  # Get the output tensor
-            pred_class = torch.argmax(output, dim=1).item()  # Get the predicted class index
+            output = model(image)  # Model output is a tensor of shape [1, 2]
+
+            # Extract the predicted class by getting the index of max value
+            pred_class = torch.argmax(output, dim=1).item()
 
             # Map the predicted class to digit/hand score using the class map
-            result = label_map[pred_class]
+            result = label_map.get(pred_class, {"digit_score": 0, "hand_score": 0})
 
         # Return the predicted results
         return {
             "digit_score": result["digit_score"],
             "hand_score": result["hand_score"]
         }
+
     except Exception as e:
+        # Return detailed error message
         return JSONResponse(status_code=400, content={"error": str(e)})
