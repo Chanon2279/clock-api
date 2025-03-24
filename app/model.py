@@ -1,4 +1,3 @@
-# model.py
 import torch
 import torch.nn as nn
 
@@ -26,7 +25,7 @@ class ClockClassifier(nn.Module):
             nn.Linear(64 * 16 * 16, 128),
             nn.ReLU(),
             nn.Dropout(0.4),
-            nn.Linear(128, 4) 
+            nn.Linear(128, 4)  # 4 classes, representing the 4 categories
         )
 
     def forward(self, x):
