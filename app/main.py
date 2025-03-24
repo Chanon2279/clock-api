@@ -5,7 +5,7 @@ from PIL import Image
 import torch
 import io
 from torchvision import transforms
-from .model import ClockMultiLabel  # Import model
+from .model import ClockClassifier  # Import model
 
 app = FastAPI()
 
@@ -21,8 +21,8 @@ app.add_middleware(
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
-model = ClockMultiLabel().to(device)
-model.load_state_dict(torch.load('app/clock_model.pth', map_location=device))
+model = ClockClassifier().to(device)
+model.load_state_dict(torch.load('app/clock_model_multiclass.pth', map_location=device))
 model.eval()
 
 # Transform (ใช้เหมือนตอนเทรน)
@@ -46,13 +46,23 @@ async def predict(file: UploadFile = File(...)):
         # Predict
         with torch.no_grad():
             output = model(image)
-            probs = torch.sigmoid(output)[0]  # Apply Sigmoid HERE!
-            digit_prob, hand_prob = probs[0].item(), probs[1].item()
+            probs = torch.softmax(output, dim=1)[0]  # Apply Softmax to get probabilities
+            pred_class = torch.argmax(probs).item()  # Get predicted class
+
+        # Map class to label (digit, hand) pair
+        class_map = {
+            0: (1, 1),
+            1: (1, 0),
+            2: (0, 1),
+            3: (0, 0)
+        }
+        digit_score, hand_score = class_map[pred_class]
+        digit_prob, hand_prob = probs[pred_class].item(), probs[pred_class].item()
 
         return {
-            "digit_score": 1 if digit_prob >= 0.5 else 0,
+            "digit_score": digit_score,
             "digit_prob": round(digit_prob, 3),
-            "hand_score": 1 if hand_prob >= 0.5 else 0,
+            "hand_score": hand_score,
             "hand_prob": round(hand_prob, 3)
         }
     except Exception as e:
