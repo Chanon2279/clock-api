@@ -55,16 +55,16 @@ async def predict(file: UploadFile = File(...)):
         # Predict
         with torch.no_grad():
             output = model(image)
-            probs = torch.softmax(output, dim=1)[0].cpu().numpy()
-            pred_class = int(np.argmax(probs))  # ใช้ np.argmax() ได้แล้ว
+            probs = torch.softmax(output, dim=1)[0].cpu().numpy()  # ใช้ softmax เพื่อให้เป็น probability
+            pred_class = int(np.argmax(probs))  # เลือก class ที่มีค่ามากที่สุด
 
         result = label_map[pred_class]
 
         return {
             "digit_score": result["digit_score"],
-            "digit_prob": round(probs[pred_class], 3),
+            "digit_prob": round(probs[pred_class], 3),  # ผลลัพธ์การทำนายสำหรับ digit_score
             "hand_score": result["hand_score"],
-            "hand_prob": round(probs[pred_class], 3)
+            "hand_prob": round(probs[pred_class], 3)  # ผลลัพธ์การทำนายสำหรับ hand_score
         }
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
