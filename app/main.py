@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from PIL import Image
@@ -6,7 +6,11 @@ import torch
 import io
 import numpy as np
 from torchvision import transforms
+<<<<<<< HEAD
 from .model import ClockClassifier  # Make sure this is the correct model import
+=======
+from .model import ClockMultiOutput  # เปลี่ยน import
+>>>>>>> parent of 855b569 (fix model)
 
 app = FastAPI()
 
@@ -18,12 +22,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+<<<<<<< HEAD
 # Device (CPU or GPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
 model = ClockClassifier().to(device)
 model.load_state_dict(torch.load('app/clock_model_multiclass.pth', map_location=device))
+=======
+# Device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Load model
+model = ClockMultiOutput(num_digit_classes=10, num_hand_classes=12).to(device)
+model.load_state_dict(torch.load('app/clock_model.pth', map_location=device))
+>>>>>>> parent of 855b569 (fix model)
 model.eval()
 
 # Transform (like during training, no RandomRotation)
@@ -45,7 +58,11 @@ def root():
     return {"message": "Clock API Multi-Class is running!"}
 
 @app.post("/predict/")
-async def predict(file: UploadFile = File(...)):
+async def predict(
+    file: UploadFile = File(...),
+    correct_digit: int = Form(...),  
+    correct_hand: int = Form(...)   
+):
     try:
         # Read image file and transform
         image_bytes = await file.read()
@@ -54,7 +71,17 @@ async def predict(file: UploadFile = File(...)):
 
         # Make prediction with model
         with torch.no_grad():
+<<<<<<< HEAD
             output = model(image)  # Model output is a tensor of shape [1, 2]
+=======
+            digit_out, hand_out = model(image)
+            digit_pred = torch.argmax(digit_out, dim=1).item()
+            hand_pred = torch.argmax(hand_out, dim=1).item()
+
+        # คะแนน
+        digit_score = 1 if digit_pred == correct_digit else 0
+        hand_score = 1 if hand_pred == correct_hand else 0
+>>>>>>> parent of 855b569 (fix model)
 
             # Extract the predicted class by getting the index of max value
             pred_class = torch.argmax(output, dim=1).item()
@@ -64,8 +91,13 @@ async def predict(file: UploadFile = File(...)):
 
         # Return the predicted results
         return {
+<<<<<<< HEAD
             "digit_score": result["digit_score"],
             "hand_score": result["hand_score"]
+=======
+            "digit_score": digit_score,
+            "hand_score": hand_score
+>>>>>>> parent of 855b569 (fix model)
         }
 
     except Exception as e:
