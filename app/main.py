@@ -1,13 +1,19 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 import torch
 import io
+import os
 from torchvision import transforms
 from .model import ClockMultiLabel  # Import model
 
 app = FastAPI()
+
+# Serve static files
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # CORS settings
 app.add_middleware(
@@ -33,7 +39,7 @@ transform = transforms.Compose([
 
 @app.get("/")
 def root():
-    return {"message": "Clock API is running!"}
+    return FileResponse(os.path.join(static_dir, "index.html"))
 
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
