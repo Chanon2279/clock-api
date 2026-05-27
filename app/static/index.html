@@ -9,8 +9,8 @@
 
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
+      background: linear-gradient(135deg, #ffe4f0 0%, #ffc2dd 100%);
+      color: #5a1a35;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -19,40 +19,43 @@
     }
 
     .card {
-      background: #1e293b;
-      border-radius: 16px;
+      background: #fff0f6;
+      border-radius: 20px;
       padding: 36px;
       width: 100%;
       max-width: 480px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 32px rgba(255, 105, 160, 0.25);
+      border: 1.5px solid #ffb3d1;
     }
 
     h1 {
       font-size: 1.6rem;
       font-weight: 700;
       margin-bottom: 4px;
-      color: #f1f5f9;
+      color: #c2185b;
     }
 
     .subtitle {
       font-size: 0.9rem;
-      color: #94a3b8;
+      color: #e91e8c;
       margin-bottom: 28px;
+      opacity: 0.75;
     }
 
     /* Drop zone */
     .dropzone {
-      border: 2px dashed #334155;
-      border-radius: 12px;
+      border: 2px dashed #f48fb1;
+      border-radius: 14px;
       padding: 32px;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
       position: relative;
+      background: #fff5f9;
     }
     .dropzone:hover, .dropzone.dragover {
-      border-color: #6366f1;
-      background: #1e2d45;
+      border-color: #e91e8c;
+      background: #ffe4f0;
     }
     .dropzone input[type="file"] {
       position: absolute;
@@ -63,8 +66,8 @@
       height: 100%;
     }
     .dropzone .icon { font-size: 2.5rem; margin-bottom: 8px; }
-    .dropzone p { color: #94a3b8; font-size: 0.9rem; }
-    .dropzone span { color: #6366f1; font-weight: 600; }
+    .dropzone p { color: #ad1457; font-size: 0.9rem; }
+    .dropzone span { color: #e91e8c; font-weight: 600; }
 
     /* Preview */
     #preview-wrap {
@@ -75,13 +78,13 @@
     #preview-wrap img {
       max-width: 100%;
       max-height: 220px;
-      border-radius: 10px;
-      border: 2px solid #334155;
+      border-radius: 12px;
+      border: 2px solid #f48fb1;
       object-fit: contain;
     }
     #file-name {
       font-size: 0.8rem;
-      color: #64748b;
+      color: #f06292;
       margin-top: 8px;
     }
 
@@ -91,18 +94,24 @@
       width: 100%;
       margin-top: 20px;
       padding: 14px;
-      background: #6366f1;
+      background: linear-gradient(135deg, #e91e8c, #f06292);
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 4px 15px rgba(233, 30, 140, 0.35);
     }
-    button#analyze-btn:hover { background: #4f46e5; }
+    button#analyze-btn:hover { opacity: 0.9; }
     button#analyze-btn:active { transform: scale(0.98); }
-    button#analyze-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+    button#analyze-btn:disabled {
+      background: #f8bbd0;
+      color: #f48fb1;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
 
     /* Results */
     #results {
@@ -111,14 +120,16 @@
     }
     .result-title {
       font-size: 0.85rem;
-      color: #94a3b8;
+      color: #ad1457;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-bottom: 14px;
+      font-weight: 600;
     }
     .result-item {
-      background: #0f172a;
-      border-radius: 10px;
+      background: #fff0f6;
+      border: 1px solid #ffb3d1;
+      border-radius: 12px;
       padding: 14px 18px;
       margin-bottom: 10px;
       display: flex;
@@ -126,17 +137,15 @@
       gap: 14px;
     }
     .result-icon { font-size: 1.6rem; }
-    .result-label {
-      flex: 1;
-    }
+    .result-label { flex: 1; }
     .result-label .name {
       font-size: 0.95rem;
       font-weight: 600;
-      color: #e2e8f0;
+      color: #880e4f;
     }
     .result-label .desc {
       font-size: 0.78rem;
-      color: #64748b;
+      color: #f06292;
       margin-top: 2px;
     }
     .badge {
@@ -145,12 +154,12 @@
       font-size: 0.8rem;
       font-weight: 700;
     }
-    .badge.found    { background: #14532d; color: #4ade80; }
-    .badge.notfound { background: #450a0a; color: #f87171; }
+    .badge.found    { background: #fce4ec; color: #c2185b; border: 1px solid #f48fb1; }
+    .badge.notfound { background: #f3e5f5; color: #8e24aa; border: 1px solid #ce93d8; }
 
     .prob-bar-wrap {
       margin-top: 6px;
-      background: #1e293b;
+      background: #fce4ec;
       border-radius: 4px;
       height: 6px;
       overflow: hidden;
@@ -160,25 +169,26 @@
       border-radius: 4px;
       transition: width 0.6s ease;
     }
-    .prob-bar.green { background: #4ade80; }
-    .prob-bar.red   { background: #f87171; }
+    .prob-bar.green { background: linear-gradient(90deg, #f06292, #e91e8c); }
+    .prob-bar.red   { background: #ce93d8; }
 
     /* Error */
     #error-msg {
       display: none;
       margin-top: 16px;
       padding: 12px 16px;
-      background: #450a0a;
-      border-radius: 8px;
-      color: #f87171;
+      background: #fce4ec;
+      border-radius: 10px;
+      color: #c2185b;
       font-size: 0.88rem;
+      border: 1px solid #f48fb1;
     }
 
     /* Loader */
     .loader {
       display: inline-block;
       width: 16px; height: 16px;
-      border: 2px solid #ffffff44;
+      border: 2px solid rgba(255,255,255,0.4);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
@@ -190,14 +200,14 @@
 </head>
 <body>
   <div class="card">
-    <h1>🕐 Clock Analyzer</h1>
+    <h1>🌸 Clock Analyzer</h1>
     <p class="subtitle">อัปโหลดรูปนาฬิกา เพื่อตรวจสอบว่ามีตัวเลขและเข็มหรือไม่</p>
 
     <div class="dropzone" id="dropzone">
       <input type="file" id="file-input" accept="image/*" />
       <div class="icon">📷</div>
       <p><span>คลิกเลือกรูป</span> หรือลากวางที่นี่</p>
-      <p style="margin-top:4px; font-size:0.78rem;">PNG, JPG, JPEG</p>
+      <p style="margin-top:4px; font-size:0.78rem; color:#f06292;">PNG, JPG, JPEG</p>
     </div>
 
     <div id="preview-wrap">
@@ -205,12 +215,12 @@
       <div id="file-name"></div>
     </div>
 
-    <button id="analyze-btn">วิเคราะห์รูปนาฬิกา</button>
+    <button id="analyze-btn">🔍 วิเคราะห์รูปนาฬิกา</button>
 
     <div id="error-msg"></div>
 
     <div id="results">
-      <div class="result-title">ผลการวิเคราะห์</div>
+      <div class="result-title">✨ ผลการวิเคราะห์</div>
 
       <div class="result-item">
         <div class="result-icon">🔢</div>
@@ -252,7 +262,6 @@
     const resultsEl   = document.getElementById('results');
     const errorEl     = document.getElementById('error-msg');
 
-    // Drag & drop
     dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
     dropzone.addEventListener('drop', e => {
@@ -296,7 +305,6 @@
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         const data = await res.json();
 
-        // digit
         const dProb = (data.digit_prob * 100).toFixed(1);
         document.getElementById('digit-prob-text').textContent = dProb + '%';
         document.getElementById('digit-bar').style.width = dProb + '%';
@@ -305,7 +313,6 @@
         dBadge.textContent = data.digit_score ? 'พบ ✓' : 'ไม่พบ ✗';
         dBadge.className = 'badge ' + (data.digit_score ? 'found' : 'notfound');
 
-        // hand
         const hProb = (data.hand_prob * 100).toFixed(1);
         document.getElementById('hand-prob-text').textContent = hProb + '%';
         document.getElementById('hand-bar').style.width = hProb + '%';
@@ -320,7 +327,7 @@
         errorEl.style.display = 'block';
       } finally {
         analyzeBtn.disabled = false;
-        analyzeBtn.innerHTML = 'วิเคราะห์รูปนาฬิกา';
+        analyzeBtn.innerHTML = '🔍 วิเคราะห์รูปนาฬิกา';
       }
     });
   </script>
