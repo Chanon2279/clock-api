@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clock Analyzer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 36px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #f1f5f9;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 28px;
+    }
+
+    /* Drop zone */
+    .dropzone {
+      border: 2px dashed #334155;
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: #6366f1;
+      background: #1e2d45;
+    }
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .dropzone .icon { font-size: 2.5rem; margin-bottom: 8px; }
+    .dropzone p { color: #94a3b8; font-size: 0.9rem; }
+    .dropzone span { color: #6366f1; font-weight: 600; }
+
+    /* Preview */
+    #preview-wrap {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+    }
+    #preview-wrap img {
+      max-width: 100%;
+      max-height: 220px;
+      border-radius: 10px;
+      border: 2px solid #334155;
+      object-fit: contain;
+    }
+    #file-name {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 8px;
+    }
+
+    /* Button */
+    button#analyze-btn {
+      display: none;
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button#analyze-btn:hover { background: #4f46e5; }
+    button#analyze-btn:active { transform: scale(0.98); }
+    button#analyze-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+    /* Results */
+    #results {
+      display: none;
+      margin-top: 24px;
+    }
+    .result-title {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+    }
+    .result-item {
+      background: #0f172a;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .result-icon { font-size: 1.6rem; }
+    .result-label {
+      flex: 1;
+    }
+    .result-label .name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .result-label .desc {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .badge.found    { background: #14532d; color: #4ade80; }
+    .badge.notfound { background: #450a0a; color: #f87171; }
+
+    .prob-bar-wrap {
+      margin-top: 6px;
+      background: #1e293b;
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .prob-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+    .prob-bar.green { background: #4ade80; }
+    .prob-bar.red   { background: #f87171; }
+
+    /* Error */
+    #error-msg {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #450a0a;
+      border-radius: 8px;
+      color: #f87171;
+      font-size: 0.88rem;
+    }
+
+    /* Loader */
+    .loader {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #ffffff44;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🕐 Clock Analyzer</h1>
+    <p class="subtitle">อัปโหลดรูปนาฬิกา เพื่อตรวจสอบว่ามีตัวเลขและเข็มหรือไม่</p>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="file-input" accept="image/*" />
+      <div class="icon">📷</div>
+      <p><span>คลิกเลือกรูป</span> หรือลากวางที่นี่</p>
+      <p style="margin-top:4px; font-size:0.78rem;">PNG, JPG, JPEG</p>
+    </div>
+
+    <div id="preview-wrap">
+      <img id="preview-img" src="" alt="preview" />
+      <div id="file-name"></div>
+    </div>
+
+    <button id="analyze-btn">วิเคราะห์รูปนาฬิกา</button>
+
+    <div id="error-msg"></div>
+
+    <div id="results">
+      <div class="result-title">ผลการวิเคราะห์</div>
+
+      <div class="result-item">
+        <div class="result-icon">🔢</div>
+        <div class="result-label">
+          <div class="name">ตัวเลข (Digit)</div>
+          <div class="desc">
+            ความมั่นใจ: <span id="digit-prob-text">-</span>
+            <div class="prob-bar-wrap">
+              <div class="prob-bar green" id="digit-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="badge" id="digit-badge">-</div>
+      </div>
+
+      <div class="result-item">
+        <div class="result-icon">🕐</div>
+        <div class="result-label">
+          <div class="name">เข็มนาฬิกา (Hand)</div>
+          <div class="desc">
+            ความมั่นใจ: <span id="hand-prob-text">-</span>
+            <div class="prob-bar-wrap">
+              <div class="prob-bar green" id="hand-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="badge" id="hand-badge">-</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput   = document.getElementById('file-input');
+    const dropzone    = document.getElementById('dropzone');
+    const previewWrap = document.getElementById('preview-wrap');
+    const previewImg  = document.getElementById('preview-img');
+    const fileNameEl  = document.getElementById('file-name');
+    const analyzeBtn  = document.getElementById('analyze-btn');
+    const resultsEl   = document.getElementById('results');
+    const errorEl     = document.getElementById('error-msg');
+
+    // Drag & drop
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) handleFile(fileInput.files[0]);
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+        previewWrap.style.display = 'block';
+        fileNameEl.textContent = file.name;
+        analyzeBtn.style.display = 'block';
+        resultsEl.style.display = 'none';
+        errorEl.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    analyzeBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML = '<span class="loader"></span>กำลังวิเคราะห์...';
+      errorEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/predict/', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data = await res.json();
+
+        // digit
+        const dProb = (data.digit_prob * 100).toFixed(1);
+        document.getElementById('digit-prob-text').textContent = dProb + '%';
+        document.getElementById('digit-bar').style.width = dProb + '%';
+        document.getElementById('digit-bar').className = 'prob-bar ' + (data.digit_score ? 'green' : 'red');
+        const dBadge = document.getElementById('digit-badge');
+        dBadge.textContent = data.digit_score ? 'พบ ✓' : 'ไม่พบ ✗';
+        dBadge.className = 'badge ' + (data.digit_score ? 'found' : 'notfound');
+
+        // hand
+        const hProb = (data.hand_prob * 100).toFixed(1);
+        document.getElementById('hand-prob-text').textContent = hProb + '%';
+        document.getElementById('hand-bar').style.width = hProb + '%';
+        document.getElementById('hand-bar').className = 'prob-bar ' + (data.hand_score ? 'green' : 'red');
+        const hBadge = document.getElementById('hand-badge');
+        hBadge.textContent = data.hand_score ? 'พบ ✓' : 'ไม่พบ ✗';
+        hBadge.className = 'badge ' + (data.hand_score ? 'found' : 'notfound');
+
+        resultsEl.style.display = 'block';
+      } catch (err) {
+        errorEl.textContent = '❌ เกิดข้อผิดพลาด: ' + err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerHTML = 'วิเคราะห์รูปนาฬิกา';
+      }
+    });
+  </script>
+</body>
+</html>
